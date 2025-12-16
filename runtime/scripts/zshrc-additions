@@ -1,0 +1,7 @@
+# EnvHaven additions for zsh
+
+# Welcome message on first login (only in interactive shells)
+[ -f /defaults/envhaven-welcome.sh ] && source /defaults/envhaven-welcome.sh
+
+# Convenience alias
+alias envhaven-help='cat /config/workspace/AGENTS.md'

@@ -1,0 +1,83 @@
+{
+  "name": "envhaven",
+  "displayName": "EnvHaven",
+  "description": "EnvHaven cloud IDE extension - sidebar and environment management",
+  "version": "0.2.0",
+  "publisher": "envhaven",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/envhaven/envhaven"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "envhaven",
+    "cloud ide",
+    "ai coding",
+    "development environment"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "envhaven.refreshSidebar",
+        "title": "EnvHaven: Refresh Sidebar"
+      },
+      {
+        "command": "envhaven.setActiveAIExtension",
+        "title": "EnvHaven: Set Active AI Extension"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "envhaven-sidebar",
+          "title": "EnvHaven",
+          "icon": "$(home)"
+        }
+      ]
+    },
+    "views": {
+      "envhaven-sidebar": [
+        {
+          "type": "webview",
+          "id": "envhaven.sidebarView",
+          "name": "EnvHaven",
+          "contextualTitle": "EnvHaven"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "EnvHaven",
+      "properties": {
+        "envhaven.managedMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable managed mode features (set automatically by ENVHAVEN_MANAGED env var)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "dev": "bun esbuild.mjs --watch",
+    "build": "bun esbuild.mjs --production",
+    "build:webview": "cd webview && bun run build",
+    "package": "bun run build && bun run build:webview && vsce package --out envhaven.vsix",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv bash
+# Cloudflared tunnel service - only runs on managed EnvHaven instances
+# Open-source users won't have CLOUDFLARE_TUNNEL_TOKEN set, so service exits cleanly
+
+if [ -z "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
+    # No token = not a managed instance, disable this service
+    s6-svc -Od .
+    exit 0
+fi
+
+exec cloudflared tunnel run --token "$CLOUDFLARE_TUNNEL_TOKEN"

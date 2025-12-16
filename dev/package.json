@@ -1,0 +1,31 @@
+{
+  "name": "@envhaven/dev",
+  "version": "0.1.0",
+  "description": "EnvHaven development CLI - A delightful TUI for local development",
+  "type": "module",
+  "bin": {
+    "eh": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "bun run src/index.tsx",
+    "build": "bun build src/index.tsx --outdir dist --target bun",
+    "setup": "bun install && bun run build && bun link",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ink": "^6.5.1",
+    "jotai": "^2.10.3",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "@types/react": "^19.0.0",
+    "react-devtools-core": "^7.0.1",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "author": "EnvHaven Team",
+  "license": "MIT"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "@envhaven/cli",
+  "version": "0.1.1",
+  "description": "Haven CLI - Local editor + remote AI coding environment",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "haven": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun run scripts/build.ts",
+    "build:dev": "bun build src/index.ts --outdir dist --target bun",
+    "build:mutagen": "bun run scripts/bundle-mutagen.ts",
+    "setup": "bun install && bun run build:dev && bun link",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "bunx oxlint ."
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "cli",
+    "envhaven",
+    "sync",
+    "remote",
+    "development",
+    "ai",
+    "coding"
+  ],
+  "author": "EnvHaven Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/envhaven/envhaven.git",
+    "directory": "cli"
+  }
+}

@@ -1,0 +1,53 @@
+#!/usr/bin/with-contenv bash
+
+# Ensure XDG directories exist for tools like opencode
+mkdir -p /config/.local/share /config/.local/bin /config/.local/state /config/.config /config/.cache
+chown -R abc:abc /config/.local /config/.config /config/.cache
+
+SSHD_CONFIG="/etc/ssh/sshd_config"
+if ! grep -q "^AllowUsers" "$SSHD_CONFIG"; then
+    echo "AllowUsers abc" >> "$SSHD_CONFIG"
+    echo "SSH: AllowUsers set to abc"
+elif ! grep -q "AllowUsers.*abc" "$SSHD_CONFIG"; then
+    sed -i "s/^AllowUsers.*/AllowUsers abc/" "$SSHD_CONFIG"
+    echo "SSH: AllowUsers updated to abc"
+fi
+
+SSH_DIR="/config/.ssh"
+AUTH_KEYS="$SSH_DIR/authorized_keys"
+
+mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
+touch "$AUTH_KEYS"
+chmod 600 "$AUTH_KEYS"
+
+[ -n "$PUBLIC_KEY" ] && echo "$PUBLIC_KEY" >> "$AUTH_KEYS"
+[ -n "$PUBLIC_KEY_FILE" ] && [ -f "$PUBLIC_KEY_FILE" ] && cat "$PUBLIC_KEY_FILE" >> "$AUTH_KEYS"
+if [ -n "$PUBLIC_KEY_DIR" ] && [ -d "$PUBLIC_KEY_DIR" ]; then
+    for f in "$PUBLIC_KEY_DIR"/*; do [ -f "$f" ] && cat "$f" >> "$AUTH_KEYS"; done
+fi
+[ -n "$PUBLIC_KEY_URL" ] && curl -fsSL "$PUBLIC_KEY_URL" >> "$AUTH_KEYS" 2>/dev/null
+
+awk '!seen[$0]++' "$AUTH_KEYS" > "$AUTH_KEYS.tmp" && mv "$AUTH_KEYS.tmp" "$AUTH_KEYS"
+chmod 600 "$AUTH_KEYS"
+chown -R abc:abc "$SSH_DIR"
+
+CURRENT_SHELL=$(getent passwd abc | cut -d: -f7)
+if [ "$CURRENT_SHELL" = "/bin/false" ] || [ "$CURRENT_SHELL" = "/usr/sbin/nologin" ]; then
+    if command -v zsh &> /dev/null; then
+        chsh -s "$(which zsh)" abc 2>/dev/null || true
+    else
+        chsh -s /bin/bash abc 2>/dev/null || true
+    fi
+fi
+
+BASHRC="/config/.bashrc"
+if [ -f "$BASHRC" ] && ! grep -q "EnvHaven additions" "$BASHRC" 2>/dev/null; then
+    cat /defaults/bashrc-additions >> "$BASHRC"
+    chown abc:abc "$BASHRC"
+elif [ ! -f "$BASHRC" ]; then
+    cp /defaults/bashrc-additions "$BASHRC"
+    chown abc:abc "$BASHRC"
+fi
+
+echo "User configuration completed"

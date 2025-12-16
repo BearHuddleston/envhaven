@@ -1,0 +1,271 @@
+# EnvHaven Environment
+
+This file provides context for AI coding assistants about the EnvHaven development environment.
+
+## About EnvHaven
+
+EnvHaven is a **batteries-included environment for AI coding agents**. You're running inside an isolated container with:
+
+- **Full sudo access** in a safe sandbox — break things freely, nuke and restart if needed
+- **12+ AI coding tools** pre-installed and ready to use
+- **Multiple access modes** — browser IDE, SSH terminal, or local editor via Haven CLI
+- **Persistent workspace** — code, configs, and projects survive container restarts
+
+## Environment Details
+
+| Property | Value |
+|----------|-------|
+| **OS** | Ubuntu (Docker container) |
+| **Shell** | zsh (oh-my-zsh) or bash |
+| **User** | abc |
+| **Workspace** | ${WORKSPACE_PATH} |
+
+### Available Runtimes
+
+| Runtime | Version | Package Manager |
+|---------|---------|-----------------|
+| **Node.js** | 20.x LTS | npm, pnpm, yarn |
+| **Bun** | latest | bun (preferred for JS) |
+| **Python** | 3.12.x | uv (preferred), pip |
+| **Go** | 1.22.x | go modules |
+| **Rust** | stable | cargo |
+
+## AI Coding Tools
+
+12 AI coding tools are pre-installed. Most require API keys or authentication.
+
+### CLI Tools
+
+| Tool | Command | API Key / Auth |
+|------|---------|----------------|
+| **OpenCode** | `opencode` | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` |
+| **Claude Code** | `claude` | `ANTHROPIC_API_KEY` or `/login` in CLI |
+| **Aider** | `aider` | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `OPENROUTER_API_KEY` |
+| **Codex** | `codex` | `OPENAI_API_KEY` or ChatGPT login |
+| **Gemini CLI** | `gemini` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
+| **Goose** | `goose` | `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (run `goose configure`) |
+| **Mistral Vibe** | `vibe` | `MISTRAL_API_KEY` |
+| **Qwen Code** | `qwen` | `QWEN_API_KEY` or `OPENAI_API_KEY` (compatible endpoint) |
+| **Amp** | `amp` | `AMP_API_KEY` or `amp login` |
+| **Augment** | `auggie` | Browser login via `auggie login` |
+| **Kiro** | `kiro-cli` | Browser login (GitHub / Google / AWS Builder ID) |
+| **Factory Droid** | `droid` | Browser login or `FACTORY_API_KEY` |
+
+### Quick Start
+
+```bash
+# Authenticate with GitHub (recommended first step)
+gh auth login
+
+# Start coding with AI
+opencode              # OpenCode (recommended)
+claude                # Claude Code
+aider                 # Aider
+```
+
+### API Key Configuration
+
+Set keys via environment variables or the EnvHaven sidebar:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...   # Claude Code, Aider, OpenCode, Goose
+export OPENAI_API_KEY=sk-...          # Codex CLI, Aider, Goose, Qwen
+export GEMINI_API_KEY=...             # Gemini CLI, Aider, OpenCode
+export GOOGLE_API_KEY=...             # Gemini CLI (alternative)
+export MISTRAL_API_KEY=...            # Mistral Vibe
+export AMP_API_KEY=...                # Amp
+export OPENROUTER_API_KEY=...         # Aider (OpenRouter)
+export QWEN_API_KEY=...               # Qwen Code
+export FACTORY_API_KEY=...            # Factory/Droid
+```
+
+Add to `~/.zshrc` or `~/.bashrc` for persistence across sessions.
+
+### VS Code Extension
+
+The **EnvHaven sidebar** (Activity Bar) provides:
+
+| Feature | Description |
+|---------|-------------|
+| **AI Tool Launcher** | One-click launch with status indicators |
+| **API Key Management** | Secure input fields, auto-saves to shell config |
+| **SSH Key Setup** | Import from GitHub URL or paste directly |
+| **Workspace Info** | URLs, SSH command, workspace path |
+
+**Status indicators:** ● ready (key set) / ○ needs setup
+
+## Haven CLI (Local Editor + Remote AI)
+
+Haven CLI enables using your local editor (neovim, emacs, helix) while AI tools run here. Changes sync bidirectionally in ~200ms.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         USER'S LOCAL MACHINE                            │
+│  ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐   │
+│  │   Local Editor  │     │   Haven CLI     │     │  Sync Daemon    │   │
+│  │  nvim/emacs/    │     │  haven connect  │     │   (Mutagen)     │   │
+│  │  helix/etc      │     │                 │     │  ~200ms sync    │   │
+│  └────────┬────────┘     └────────┬────────┘     └────────┬────────┘   │
+│           └───────────────────────┼───────────────────────┘             │
+│                    ~/projects/myapp/ (local files)                      │
+└───────────────────────────────────┼─────────────────────────────────────┘
+                          SSH + Mutagen Protocol
+                                    │
+┌───────────────────────────────────┼─────────────────────────────────────┐
+│                    ${WORKSPACE_PATH}/myapp/ (this container)            │
+│           ┌─────────────────┐     ┌─────────────────┐                   │
+│           │  Claude Code    │     │    OpenCode     │                   │
+│           │  (AI runs here) │     │  (AI runs here) │                   │
+│           └─────────────────┘     └─────────────────┘                   │
+│                          THIS ENVHAVEN CONTAINER                        │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `haven connect [path] [target]` | Connect local directory to workspace |
+| `haven disconnect [path]` | Stop sync and disconnect |
+| `haven status` | Show connection status |
+| `haven <any-command>` | Run any command in workspace |
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--idle-timeout <duration>` | Override idle timeout (e.g., `4h`) |
+| `--reset-host-key` | Clear cached host key after workspace rebuild |
+| `--watch` | Continuously update status (with `status`) |
+| `--json` | JSON output (with `status`) |
+| `--diagnose` | Run diagnostic checks (with `status`) |
+
+### Remote Execution
+
+Any command not reserved by Haven CLI runs in the workspace:
+
+```bash
+haven opencode          # Run OpenCode in workspace
+haven npm install       # Install dependencies remotely
+haven git status        # Check git status
+haven python app.py     # Run Python script
+```
+
+### Sync Details
+
+- **Latency:** ~200ms bidirectional via Mutagen
+- **Conflicts:** Creates `.sync-conflict` files when both sides modify same file
+- **Custom ignores:** Add `.havenignore` file (gitignore syntax)
+
+### Prerequisites
+
+Add your SSH public key via:
+- **EnvHaven sidebar** (SSH Access section) — easiest
+- `PUBLIC_KEY_URL` env var (e.g., `https://github.com/username.keys`)
+- Manual: add to `~/.ssh/authorized_keys`
+
+## Development Conventions
+
+### Web Servers
+
+**MUST bind to `0.0.0.0`**, not localhost or 127.0.0.1, for the app to be accessible outside the container.
+
+```javascript
+// Express
+app.listen(3000, '0.0.0.0');
+
+// Next.js (package.json)
+"scripts": { "dev": "next dev -H 0.0.0.0" }
+
+// Vite (vite.config.ts)
+server: { host: '0.0.0.0' }
+```
+
+### Package Managers
+
+| Language | Preferred | Why |
+|----------|-----------|-----|
+| JavaScript | `bun` | Fastest, all-in-one runtime + package manager |
+| Python | `uv` | Faster than pip, manages virtualenvs automatically |
+
+```bash
+bun install          # JS dependencies
+bun add express      # Add package
+
+uv pip install       # Python dependencies
+uv add fastapi       # Add package (creates venv if needed)
+```
+
+### Databases
+
+Use **SQLite** by default unless the project specifically requires something else.
+
+```bash
+sqlite3 myapp.db
+```
+
+## Available CLI Tools
+
+| Tool | Command | Purpose |
+|------|---------|---------|
+| **Bun** | `bun` | JavaScript runtime & package manager |
+| **uv** | `uv` | Python package manager |
+| **pnpm** | `pnpm` | Node package manager |
+| **yarn** | `yarn` | Node package manager |
+| **ripgrep** | `rg` | Fast text search |
+| **fd** | `fd` | Fast file finder |
+| **jq** | `jq` | JSON processor |
+| **sqlite3** | `sqlite3` | SQLite CLI |
+| **GitHub CLI** | `gh` | GitHub operations |
+| **git** | `git` | Version control |
+| **curl** | `curl` | HTTP requests |
+| **htop** | `htop` | Process viewer |
+| **cloudflared** | `cloudflared` | Cloudflare tunnel CLI |
+
+## Workspace Structure
+
+```
+/config/                    # Container home directory
+├── workspace/              # Project files (${WORKSPACE_PATH})
+│   ├── AGENTS.md           # This file
+│   └── <projects>/         # User's projects
+├── .ssh/                   # SSH keys
+│   └── authorized_keys     # For SSH/Haven CLI access
+├── .zshrc                  # Shell config (persist API keys here)
+└── .config/                # Tool configurations
+```
+
+## Quick Start Examples
+
+### Node.js/Bun Project
+
+```bash
+mkdir myapp && cd myapp
+bun init
+bun add express
+```
+
+### Python Project
+
+```bash
+mkdir myapp && cd myapp
+uv init
+uv add fastapi uvicorn
+```
+
+### Go Project
+
+```bash
+mkdir myapp && cd myapp
+go mod init myapp
+```
+
+## Constraints
+
+1. **Storage**: Workspace data persists in `${WORKSPACE_PATH}`
+2. **Network**: Container has full internet access
+3. **Permissions**: Running as non-root user `abc` (sudo available)
+4. **Docker**: Docker-in-Docker available if socket is mounted
+

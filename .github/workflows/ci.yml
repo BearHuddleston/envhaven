@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    name: CLI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: cli
+
+      - name: Lint
+        run: bun run lint
+        working-directory: cli
+
+      - name: Type check
+        run: bun run typecheck
+        working-directory: cli
+
+      - name: Test
+        run: bun test
+        working-directory: cli
+
+  image:
+    name: Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: envhaven:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test code-server health
+        run: |
+          docker run -d --name test-health -p 8443:8443 envhaven:test
+          sleep 30
+          curl -f http://localhost:8443/healthz || exit 1
+          docker rm -f test-health
+
+      - name: Test SSH
+        run: |
+          docker run -d --name test-ssh -p 2222:22 -e PASSWORD=test envhaven:test
+          sleep 10
+          docker exec test-ssh pgrep sshd || exit 1
+          docker rm -f test-ssh
+
+      - name: Test runtimes
+        run: |
+          docker run --rm envhaven:test bash -c "
+            node --version &&
+            python --version &&
+            go version &&
+            rustc --version &&
+            pnpm --version &&
+            uv --version
+          "
+
+      - name: Test AI CLI tools
+        run: |
+          docker run --rm envhaven:test bash -c "
+            opencode --version &&
+            claude --version &&
+            aider --version &&
+            codex --version &&
+            gemini --version &&
+            goose --version &&
+            vibe --version &&
+            qwen --version &&
+            kiro-cli --version &&
+            droid --version &&
+            amp --version &&
+            auggie --version
+          "
+
+      - name: Test CLI tools (DOCKER_MODS)
+        run: |
+          docker run -d --name test-mods -e PASSWORD=test envhaven:test
+          echo "Waiting for DOCKER_MODS to install packages..."
+          sleep 60
+          docker exec test-mods bash -c "
+            rg --version &&
+            fd --version &&
+            jq --version &&
+            sqlite3 --version &&
+            zsh --version
+          "
+          docker rm -f test-mods
+
+  extension:
+    name: VS Code Extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dev dependencies
+        run: bun install
+        working-directory: dev
+
+      - name: Test extension build
+        run: bun dev/scripts/test-extension.ts

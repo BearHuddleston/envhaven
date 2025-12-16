@@ -1,0 +1,51 @@
+#!/usr/bin/with-contenv bash
+
+# Configure zsh customizations AFTER oh-my-zsh mod has run
+# This script waits for oh-my-zsh to be installed, then adds EnvHaven customizations
+
+# LinuxServer code-server always uses 'abc' as the user (unlike openssh-server)
+USERNAME="abc"
+ZSH_CUSTOM_DIR="/config/.oh-my-zsh/custom"
+ENVHAVEN_ZSH="$ZSH_CUSTOM_DIR/envhaven.zsh"
+ZSHENV="/config/.zshenv"
+MAX_WAIT=60  # seconds
+
+echo "Waiting for oh-my-zsh to be installed..."
+
+# Wait for oh-my-zsh custom dir to exist (created by the zsh mod)
+waited=0
+while [ ! -d "$ZSH_CUSTOM_DIR" ] && [ $waited -lt $MAX_WAIT ]; do
+    sleep 1
+    waited=$((waited + 1))
+done
+
+if [ ! -d "$ZSH_CUSTOM_DIR" ]; then
+    echo "WARNING: oh-my-zsh custom dir not found after ${MAX_WAIT}s, creating it"
+    mkdir -p "$ZSH_CUSTOM_DIR"
+fi
+
+# Copy EnvHaven zsh customizations if not already present
+if [ ! -f "$ENVHAVEN_ZSH" ]; then
+    cp /defaults/zshrc-additions "$ENVHAVEN_ZSH"
+    chown "$USERNAME:$USERNAME" "$ENVHAVEN_ZSH"
+    echo "Installed EnvHaven zsh customizations to $ENVHAVEN_ZSH"
+else
+    echo "EnvHaven zsh customizations already present"
+fi
+
+# Create .zshenv to set ZSH_DISABLE_COMPFIX BEFORE .zshrc is loaded
+# .zshenv is always sourced first, before .zshrc
+if [ ! -f "$ZSHENV" ] || ! grep -q "ZSH_DISABLE_COMPFIX" "$ZSHENV" 2>/dev/null; then
+    cat > "$ZSHENV" << 'EOF'
+# EnvHaven zsh environment
+# Disable oh-my-zsh permission check (linuxserver container uses shared volumes)
+ZSH_DISABLE_COMPFIX=true
+EOF
+    chown "$USERNAME:$USERNAME" "$ZSHENV"
+    echo "Created .zshenv with ZSH_DISABLE_COMPFIX"
+fi
+
+# Ensure ownership is correct
+chown -R "$USERNAME:$USERNAME" "/config/.oh-my-zsh" 2>/dev/null || true
+
+echo "Zsh configuration completed"

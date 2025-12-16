@@ -1,0 +1,20 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# EnvHaven Tool Manifest
+# Single source of truth for all versioned tools
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[settings]
+yes = true
+python_compile = false
+
+[tools]
+node = "20"
+python = "3.12"
+go = "1.22.5"
+bun = "latest"
+"ubi:sharkdp/fd" = "10.2.0"
+"aqua:cli/cli" = "latest"
+"aqua:cloudflare/cloudflared" = "latest"
+"aqua:sst/opencode" = "latest"
+"aqua:astral-sh/uv" = "latest"
+"ubi:block/goose" = "latest"

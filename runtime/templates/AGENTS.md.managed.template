@@ -1,0 +1,70 @@
+
+---
+
+## Managed Workspace
+
+You're running on **EnvHaven Managed** — a fully provisioned workspace with automatic HTTPS and SSH access.
+
+### Your URLs
+
+| Service | URL |
+|---------|-----|
+| **Web IDE** | ${ENVHAVEN_PUBLIC_URL} |
+| **Preview** | ${ENVHAVEN_PREVIEW_URL} |
+| **SSH** | `ssh abc@${ENVHAVEN_SSH_HOST}` |
+
+### Haven CLI Connection
+
+```bash
+# From your local machine
+haven connect . ${ENVHAVEN_WORKSPACE_NAME}
+```
+
+### Preview URLs
+
+Your web apps are accessible via the preview URL when running on **port 3000** (default).
+
+| Component | Value |
+|-----------|-------|
+| **Preview URL** | ${ENVHAVEN_PREVIEW_URL} |
+| **Default Port** | 3000 |
+
+**IMPORTANT:** Apps MUST bind to `0.0.0.0` to be accessible via preview URL.
+
+```javascript
+// Next.js (package.json)
+"scripts": { "dev": "next dev -H 0.0.0.0 -p 3000" }
+
+// Express
+app.listen(3000, '0.0.0.0');
+
+// Vite (vite.config.ts)
+server: { host: '0.0.0.0', port: 3000 }
+
+// FastAPI
+uvicorn main:app --host 0.0.0.0 --port 3000
+```
+
+### Running Persistent Servers
+
+When starting dev servers for the preview URL, run them detached so they persist after your AI session ends:
+
+```bash
+# Run detached with nohup
+nohup npm run dev > /tmp/dev.log 2>&1 &
+
+# Or use screen
+screen -dmS devserver npm run dev
+
+# Check if running
+ps aux | grep "npm run dev"
+
+# View logs
+tail -f /tmp/dev.log
+```
+
+**Tip for AI agents:** When asked to start a server, offer to run it detached so it stays active after the session ends.
+
+---
+
+*This workspace is managed by EnvHaven. For support, visit [envhaven.com](https://envhaven.com).*

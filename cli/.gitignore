@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tgz
+
+# Bundled binaries (downloaded at build time)
+assets/mutagen/mutagen-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Test artifacts
+coverage/
+.test-temp/
+
+# Logs
+*.log

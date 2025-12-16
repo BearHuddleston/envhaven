@@ -1,0 +1,47 @@
+
+---
+
+## Self-Hosted Setup
+
+You're running EnvHaven **self-hosted**. Configure access as needed.
+
+### SSH Access
+
+Configure these environment variables for correct connection strings in the UI:
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `ENVHAVEN_SSH_HOST` | `myserver.com` | External hostname |
+| `ENVHAVEN_SSH_PORT` | `2222` | External SSH port (default: 2222) |
+
+**SSH command:** `ssh abc@<host> -p 2222`
+
+**Haven CLI:** `haven connect . abc@<host>:2222`
+
+### Exposing Ports
+
+Map container ports in your `docker-compose.yml`:
+
+```yaml
+ports:
+  - "8443:8443"   # Web IDE
+  - "2222:22"     # SSH
+  - "3000:3000"   # App dev server (optional)
+```
+
+### Cloudflare Tunnels (Optional)
+
+`cloudflared` is included. Set `CLOUDFLARE_TUNNEL_TOKEN` to enable automatic tunnel.
+
+### Password Authentication
+
+| Variable | Purpose |
+|----------|---------|
+| `PASSWORD` | Web GUI password |
+| `SUDO_PASSWORD` | SSH and sudo password |
+
+See [docs/configuration.md](https://github.com/envhaven/envhaven/blob/master/docs/configuration.md) for full configuration reference.
+
+---
+
+*Self-hosted EnvHaven. For issues, visit [github.com/envhaven/envhaven](https://github.com/envhaven/envhaven).*

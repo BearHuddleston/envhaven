@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@theme {
+  /* shadcn/ui Vega style tokens mapped to VS Code theme */
+  --color-background: var(--vscode-sideBar-background);
+  --color-foreground: var(--vscode-foreground);
+  --color-card: var(--vscode-sideBar-background);
+  --color-card-foreground: var(--vscode-foreground);
+  
+  /* Popover/dropdown with robust fallback chain */
+  --color-popover: var(--vscode-dropdown-background, var(--vscode-menu-background, var(--vscode-sideBar-background, #1e1e1e)));
+  --color-popover-foreground: var(--vscode-dropdown-foreground, var(--vscode-menu-foreground, var(--vscode-foreground)));
+  
+  /* Primary/secondary buttons */
+  --color-primary: var(--vscode-button-background);
+  --color-primary-foreground: var(--vscode-button-foreground);
+  --color-secondary: var(--vscode-button-secondaryBackground);
+  --color-secondary-foreground: var(--vscode-button-secondaryForeground);
+  
+  /* Muted/subtle backgrounds */
+  --color-muted: var(--vscode-input-background);
+  --color-muted-foreground: var(--vscode-descriptionForeground);
+  
+  /* Accent (hover states) */
+  --color-accent: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+  --color-accent-foreground: var(--vscode-foreground);
+  
+  /* Destructive (errors) */
+  --color-destructive: var(--vscode-errorForeground, #f14c4c);
+  --color-destructive-foreground: var(--vscode-foreground);
+  
+  /* Borders */
+  --color-border: var(--vscode-widget-border, var(--vscode-input-border, #3c3c3c));
+  --color-input: var(--vscode-input-background);
+  --color-ring: var(--vscode-focusBorder);
+  
+  /* Legacy mappings (for backwards compat) */
+  --color-primary-hover: var(--vscode-button-hoverBackground);
+  --color-secondary-hover: var(--vscode-button-secondaryHoverBackground);
+  --color-dropdown-background: var(--color-popover);
+  --color-dropdown-foreground: var(--color-popover-foreground);
+  --color-dropdown-border: var(--color-border);
+  --color-link: var(--vscode-textLink-foreground);
+  --color-section-header: var(--vscode-sideBarSectionHeader-foreground);
+  --color-badge: var(--vscode-badge-background);
+  --color-badge-foreground: var(--vscode-badge-foreground);
+  --color-warning-background: var(--vscode-inputValidation-warningBackground);
+  --color-warning-border: var(--vscode-inputValidation-warningBorder);
+  --color-warning-foreground: var(--vscode-inputValidation-warningForeground);
+  --color-success: var(--vscode-charts-green, #89d185);
+  --color-toolbar-hover: var(--vscode-toolbar-hoverBackground);
+  --color-quote-background: var(--vscode-textBlockQuote-background);
+  --color-widget-border: var(--color-border);
+  
+  /* Font mappings */
+  --font-sans: var(--vscode-font-family);
+  --font-mono: var(--vscode-editor-font-family);
+  
+  /* Radius - shadcn default */
+  --radius: 0.5rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: var(--color-foreground);
+  background: var(--color-background);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Thin scrollbar for code blocks */
+.code-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-muted-foreground) transparent;
+}
+
+.code-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.code-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.code-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-muted-foreground);
+  border-radius: 2px;
+}
+
+.code-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-foreground);
+}
+
+/* Collapsible Animations */
+@keyframes slideDown {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-collapsible-content-height); opacity: 1; }
+}
+@keyframes slideUp {
+  from { height: var(--radix-collapsible-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+.collapsible-content[data-state='open'] {
+  animation: slideDown 0.2s ease-out;
+}
+.collapsible-content[data-state='closed'] {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Thin scrollbar for sidebar - matches VS Code native style */
+html, body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4)) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground, rgba(121, 121, 121, 0.7));
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.4));
+}
+
+

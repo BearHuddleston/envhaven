@@ -1,0 +1,29 @@
+#!/usr/bin/with-contenv bash
+
+AGENTS_FILE="/config/workspace/AGENTS.md"
+
+mkdir -p /config/workspace
+chown abc:abc /config/workspace
+
+mkdir -p /config/go
+chown -R abc:abc /config/go
+
+generate_agents_md() {
+    export USER_NAME="abc"
+    export WORKSPACE_PATH="/config/workspace"
+    
+    # Generate base template
+    envsubst < /defaults/AGENTS.md.template > "$AGENTS_FILE"
+    
+    # Append mode-specific section
+    if [ "${ENVHAVEN_MANAGED:-false}" = "true" ]; then
+        envsubst < /defaults/AGENTS.md.managed.template >> "$AGENTS_FILE"
+    else
+        envsubst < /defaults/AGENTS.md.selfhosted.template >> "$AGENTS_FILE"
+    fi
+    
+    chown abc:abc "$AGENTS_FILE"
+}
+
+generate_agents_md
+echo "AGENTS.md generated (managed=${ENVHAVEN_MANAGED:-false})"

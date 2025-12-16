@@ -1,0 +1,131 @@
+name: CLI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+
+concurrency:
+  group: cli-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: cli
+
+      - name: Lint
+        run: bun run lint
+        working-directory: cli
+
+      - name: Type check
+        run: bun run typecheck
+        working-directory: cli
+
+      - name: Test
+        run: bun test
+        working-directory: cli
+
+      - name: Build
+        run: bun run build -- --all
+        working-directory: cli
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            cli/dist/haven-darwin-arm64
+            cli/dist/haven-darwin-x64
+            cli/dist/haven-linux-x64
+            cli/dist/haven-linux-arm64
+
+  latest:
+    name: Latest
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if CLI changed
+        id: changes
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q '^cli/'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Bun
+        if: steps.changes.outputs.changed == 'true'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        if: steps.changes.outputs.changed == 'true'
+        run: bun install
+        working-directory: cli
+
+      - name: Lint
+        if: steps.changes.outputs.changed == 'true'
+        run: bun run lint
+        working-directory: cli
+
+      - name: Type check
+        if: steps.changes.outputs.changed == 'true'
+        run: bun run typecheck
+        working-directory: cli
+
+      - name: Test
+        if: steps.changes.outputs.changed == 'true'
+        run: bun test
+        working-directory: cli
+
+      - name: Build
+        if: steps.changes.outputs.changed == 'true'
+        run: bun run build -- --all
+        working-directory: cli
+
+      - name: Delete old artifact
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          gh api repos/${{ github.repository }}/actions/artifacts \
+            --jq '.artifacts[] | select(.name == "haven-cli-latest") | .id' \
+            | xargs -I {} gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/{}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Upload artifact
+        if: steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: haven-cli-latest
+          path: |
+            cli/dist/haven-darwin-arm64
+            cli/dist/haven-darwin-x64
+            cli/dist/haven-linux-x64
+            cli/dist/haven-linux-arm64
+          retention-days: 90

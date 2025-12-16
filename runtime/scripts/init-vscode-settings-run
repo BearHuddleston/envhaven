@@ -1,0 +1,14 @@
+#!/usr/bin/with-contenv bash
+
+# LinuxServer code-server always uses 'abc' as the user (unlike openssh-server)
+USERNAME="abc"
+
+SETTINGS_DIR="/config/data/User"
+SETTINGS_FILE="$SETTINGS_DIR/settings.json"
+
+if [ ! -f "$SETTINGS_FILE" ]; then
+    mkdir -p "$SETTINGS_DIR"
+    cp /defaults/settings.json "$SETTINGS_FILE"
+    chown -R "$USERNAME:$USERNAME" "$SETTINGS_DIR"
+    echo "VS Code settings applied"
+fi
