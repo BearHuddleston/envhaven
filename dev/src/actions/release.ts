@@ -99,9 +99,9 @@ export async function runRelease(
     }
   }
 
-  addLog('command', `git tag -a ${tag} -m "..."`);
-  addLog('dim', '(may prompt for GPG passphrase if signing enabled)');
-  const tagExit = await runInteractive(['git', 'tag', '-a', tag, '-m', tagMessage], repoRoot);
+  addLog('command', `git tag -s ${tag} -m "..."`);
+  addLog('dim', '(will prompt for GPG passphrase)');
+  const tagExit = await runInteractive(['git', 'tag', '-s', tag, '-m', tagMessage], repoRoot);
   if (tagExit !== 0) {
     addLog('error', 'Failed to create tag');
     return;
