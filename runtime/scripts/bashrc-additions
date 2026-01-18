@@ -1,7 +1,5 @@
-# EnvHaven additions for bash
+# EnvHaven bash configuration
 
-# Welcome message on first login
 [ -f /defaults/envhaven-welcome.sh ] && source /defaults/envhaven-welcome.sh
 
-# Convenience alias
 alias envhaven-help='cat /config/workspace/AGENTS.md'

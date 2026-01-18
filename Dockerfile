@@ -49,6 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     htop \
     git \
     zsh \
+    tmux \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================
@@ -190,13 +191,15 @@ RUN WORKBENCH_HTML="/app/code-server/lib/vscode/out/vs/code/browser/workbench/wo
 # Templates & Defaults
 # ============================================
 COPY runtime/templates/settings.json /defaults/settings.json
+COPY runtime/templates/tmux.conf /etc/tmux.conf
 COPY runtime/templates/AGENTS.md.template /defaults/AGENTS.md.template
 COPY runtime/templates/AGENTS.md.managed.template /defaults/AGENTS.md.managed.template
 COPY runtime/templates/AGENTS.md.selfhosted.template /defaults/AGENTS.md.selfhosted.template
 COPY runtime/scripts/envhaven-welcome.sh /defaults/envhaven-welcome.sh
+COPY runtime/scripts/envhaven-status /opt/envhaven/bin/envhaven
 COPY runtime/scripts/bashrc-additions /defaults/bashrc-additions
 COPY runtime/scripts/zshrc-additions /defaults/zshrc-additions
-RUN chmod +x /defaults/envhaven-welcome.sh
+RUN chmod +x /defaults/envhaven-welcome.sh /opt/envhaven/bin/envhaven
 
 # ============================================
 # Environment & Runtime Configuration

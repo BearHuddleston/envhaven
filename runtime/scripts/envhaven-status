@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+# Full EnvHaven status display
+
+if [[ -z "${NO_COLOR:-}" && -t 1 && "${TERM:-}" != "dumb" ]]; then
+  BOLD=$'\033[1m'
+  DIM=$'\033[2m'
+  CYAN=$'\033[36m'
+  GREEN=$'\033[32m'
+  YELLOW=$'\033[33m'
+  RESET=$'\033[0m'
+  G1=$'\033[38;5;183m'
+  G2=$'\033[38;5;141m'
+  G3=$'\033[38;5;135m'
+  G4=$'\033[38;5;99m'
+  VIOLET=$'\033[38;5;99m'
+else
+  BOLD="" DIM="" CYAN="" GREEN="" YELLOW="" RESET=""
+  G1="" G2="" G3="" G4="" VIOLET=""
+fi
+
+SEP="────────────────────────────────────────────────────────────────────────"
+FILLED="●"
+EMPTY="○"
+PIPE="│"
+
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+has_any_env() {
+  local _val
+  while [[ $# -gt 0 ]]; do
+    eval "_val=\"\${$1:-}\""
+    [[ -n "$_val" ]] && return 0
+    shift
+  done
+  return 1
+}
+
+get_version() {
+  local cmd="$1"
+  command_exists "$cmd" && "$cmd" --version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+' | head -n1
+}
+
+tool_indicator() {
+  local name="$1" configured="$2" width="${3:-9}"
+  if [[ "$configured" == "1" ]]; then
+    printf "%s%s%s %-${width}s" "$GREEN" "$FILLED" "$RESET" "$name"
+  else
+    printf "%s%s%s %-${width}s" "$YELLOW" "$EMPTY" "$RESET" "$name"
+  fi
+}
+
+get_ssh_string() {
+  local host="${ENVHAVEN_SSH_HOST:-}"
+  local port="${ENVHAVEN_SSH_PORT:-$([[ "${ENVHAVEN_MANAGED:-}" == "true" ]] && echo 22 || echo 2222)}"
+  [[ -z "$host" ]] && host="<host>"
+  [[ "$port" == "22" ]] && echo "abc@${host}" || echo "abc@${host} -p ${port}"
+}
+
+WORKSPACE_DIR="${DEFAULT_WORKSPACE:-/config/workspace}"
+SSH_CONN_STR=$(get_ssh_string)
+
+NODE_V=$(get_version node)
+PYTHON_V=$(get_version python3)
+GO_V=$(go version 2>/dev/null | grep -oE 'go[0-9]+\.[0-9]+' | sed 's/go//')
+RUST_V=$(get_version rustc)
+BUN_V=$(get_version bun)
+
+SSH_KEY_COUNT=0
+AUTH_KEYS="/config/.ssh/authorized_keys"
+[[ -f "$AUTH_KEYS" ]] && SSH_KEY_COUNT=$(grep '^ssh-' "$AUTH_KEYS" 2>/dev/null | wc -l | tr -d ' ')
+
+OPENCODE_CFG=0; has_any_env ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY GOOGLE_API_KEY && OPENCODE_CFG=1
+CLAUDE_CFG=0;   has_any_env ANTHROPIC_API_KEY && CLAUDE_CFG=1
+AIDER_CFG=0;    has_any_env ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY OPENROUTER_API_KEY && AIDER_CFG=1
+CODEX_CFG=0;    has_any_env OPENAI_API_KEY && CODEX_CFG=1
+GEMINI_CFG=0;   has_any_env GEMINI_API_KEY GOOGLE_API_KEY && GEMINI_CFG=1
+GOOSE_CFG=0;    has_any_env ANTHROPIC_API_KEY OPENAI_API_KEY && GOOSE_CFG=1
+VIBE_CFG=0;     has_any_env MISTRAL_API_KEY && VIBE_CFG=1
+AMP_CFG=0;      has_any_env AMP_API_KEY && AMP_CFG=1
+AUGGIE_CFG=0;   command_exists auggie && auggie tokens print >/dev/null 2>&1 && AUGGIE_CFG=1
+KIRO_CFG=0
+DROID_CFG=0;    has_any_env FACTORY_API_KEY && DROID_CFG=1
+QWEN_CFG=0;     has_any_env QWEN_API_KEY OPENAI_API_KEY && QWEN_CFG=1
+
+echo ""
+printf '%s' "$G1"
+cat << 'LOGO'
+              ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+             ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 
+            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  
+    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    
+LOGO
+printf '%s' "$G2"
+cat << 'LOGO'
+   ▓▓▓▓▓▓▓▓██                    
+  ▓▓▓▓▓▓▓▓▓▓██                   
+ █▓▓▓▓▓▓▓▓▓▓▓████████████▓▓▓▓▓▓▓▓
+             ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+LOGO
+printf '%s' "$G3"
+cat << 'LOGO'
+            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  
+           ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   
+   ███████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    
+  ▓▓▓▓▓▓▓▓▓██                    
+LOGO
+printf '%s' "$G4"
+cat << 'LOGO'
+ █▓▓▓▓▓▓▓▓▓▓▓█                   
+██▓▓▓▓▓▓▓▓▓▓▓▓█████████▓▓▓▓▓▓▓▓▓▓
+             ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 
+            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  
+           ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 
+LOGO
+printf '%s' "$RESET"
+
+echo ""
+printf "%s%s%s\n" "$DIM" "$SEP" "$RESET"
+
+if [[ "${ENVHAVEN_MANAGED:-}" == "true" ]]; then
+  printf "  Mode:       %s%sManaged%s\n" "$GREEN" "$BOLD" "$RESET"
+else
+  printf "  Mode:       %sSelf-hosted%s\n" "$CYAN" "$RESET"
+fi
+printf "  Workspace:  %s\n" "$WORKSPACE_DIR"
+
+if [[ "$SSH_KEY_COUNT" != "0" && -n "$SSH_KEY_COUNT" ]]; then
+  printf "  SSH:        %s%s ready%s  %sssh %s%s\n" "$GREEN" "$FILLED" "$RESET" "$DIM" "$SSH_CONN_STR" "$RESET"
+  printf "  Keys:       %s%s authorized%s\n" "$GREEN" "$SSH_KEY_COUNT" "$RESET"
+else
+  printf "  SSH:        %s%s not ready%s  %sssh %s%s\n" "$YELLOW" "$EMPTY" "$RESET" "$DIM" "$SSH_CONN_STR" "$RESET"
+  printf "  Keys:       %snone (add via sidebar)%s\n" "$YELLOW" "$RESET"
+fi
+
+printf "%s%s%s\n" "$DIM" "$SEP" "$RESET"
+
+printf "\n%s%sRuntimes%s\n" "$VIOLET" "$BOLD" "$RESET"
+RUNTIMES=()
+[[ -n "$NODE_V" ]] && RUNTIMES+=("Node $NODE_V")
+[[ -n "$PYTHON_V" ]] && RUNTIMES+=("Python $PYTHON_V")
+[[ -n "$GO_V" ]] && RUNTIMES+=("Go $GO_V")
+[[ -n "$RUST_V" ]] && RUNTIMES+=("Rust $RUST_V")
+[[ -n "$BUN_V" ]] && RUNTIMES+=("Bun $BUN_V")
+RUNTIME_STR=""
+first=1
+for rt in "${RUNTIMES[@]}"; do
+  [[ $first -eq 0 ]] && RUNTIME_STR+=" $PIPE "
+  RUNTIME_STR+="$rt"
+  first=0
+done
+printf "  %s\n" "$RUNTIME_STR"
+
+printf "\n%s%sAI Tools%s  %s(%s ready  %s needs key)%s\n" \
+  "$VIOLET" "$BOLD" "$RESET" "$DIM" "$FILLED" "$EMPTY" "$RESET"
+printf "  "
+tool_indicator "OpenCode" "$OPENCODE_CFG" 9
+tool_indicator "Claude" "$CLAUDE_CFG" 9
+tool_indicator "Aider" "$AIDER_CFG" 9
+tool_indicator "Codex" "$CODEX_CFG" 0
+printf "\n"
+printf "  "
+tool_indicator "Gemini" "$GEMINI_CFG" 9
+tool_indicator "Goose" "$GOOSE_CFG" 9
+tool_indicator "Vibe" "$VIBE_CFG" 9
+tool_indicator "Amp" "$AMP_CFG" 0
+printf "\n"
+printf "  "
+tool_indicator "Auggie" "$AUGGIE_CFG" 9
+tool_indicator "Kiro" "$KIRO_CFG" 9
+tool_indicator "Droid" "$DROID_CFG" 9
+tool_indicator "Qwen" "$QWEN_CFG" 0
+printf "\n"
+
+printf "\n%s%s%s\n" "$DIM" "$SEP" "$RESET"
+echo ""

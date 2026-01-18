@@ -266,6 +266,86 @@ RUN [ -f "/config/.local/bin/toolname" ] && mv "/config/.local/bin/toolname" /op
 RUN toolname --version
 ```
 
+## Persistent Terminal Sessions
+
+EnvHaven provides persistent terminal sessions that survive reconnects. This enables long-running AI agent sessions while you disconnect and reconnect freely.
+
+### Why tmux
+
+We use [tmux](https://github.com/tmux/tmux)—the battle-tested terminal multiplexer that's been rock-solid for decades. Rather than reinvent session persistence, we leverage tmux's proven architecture with a minimal, opinionated configuration.
+
+Our approach:
+- **Single session** (`envhaven`) — all terminals live here, simplifying multi-device access
+- **Clean footer** — terminal names and `+` button, no clutter
+- **Mouse enabled** — click to switch terminals, scroll naturally
+- **Sensible defaults** — 50k scrollback, no escape delay, numbering starts at 1
+
+The full config is in `runtime/templates/tmux.conf` (~40 lines). Power users can bring their own tmux knowledge; newcomers get a good experience without learning tmux.
+
+### How It Works
+
+When you open a terminal (via VS Code, SSH, or the web UI), you're connected to the `envhaven` tmux session. Each terminal is a tmux "window" within this session.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     EnvHaven Container                          │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                   Persistent Session                      │  │
+│  │                                                           │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │  │
+│  │  │  Window 1   │  │  Window 2   │  │  Window 3   │       │  │
+│  │  │  opencode   │  │   aider     │  │  npm run    │       │  │
+│  │  │  (running)  │  │  (running)  │  │  dev        │       │  │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘       │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  User disconnects → processes keep running                      │
+│  User reconnects → same terminals, same state                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### User Interfaces
+
+| Interface | Description |
+|-----------|-------------|
+| **Extension Sidebar** | "Terminals" panel to switch/create/delete terminals |
+| **Terminal Footer** | Shows all terminals; click to switch, click `+` to create new |
+| **Standard Shortcuts** | `Ctrl-b c` (new), `Ctrl-b 1-9` (switch), `Ctrl-b &` (close) |
+| **`envhaven` command** | Full status display (runtimes, AI tools) |
+
+The sidebar is optimized for browser users. The footer and shortcuts work everywhere (browser, SSH, Haven CLI).
+
+### Multi-Device Access
+
+All clients attach to the same session:
+
+```
+           Browser          SSH           Haven CLI
+              │               │               │
+              └───────────────┼───────────────┘
+                              │
+                    ┌─────────▼─────────┐
+                    │  tmux "envhaven"  │
+                    │   (in container)  │
+                    └───────────────────┘
+```
+
+Start `opencode` on your laptop via SSH, close the connection, resume from your desktop browser. Same session, same state.
+
+### Implementation Details
+
+| Component | Purpose |
+|-----------|---------|
+| `runtime/templates/tmux.conf` | Minimal tmux config (~40 lines) |
+| `runtime/scripts/envhaven-welcome.sh` | Auto-attach on shell init |
+| Extension sidebar | Polls tmux for window list, renders "Terminals" panel |
+
+**Session lifecycle:**
+- Created on first terminal open (`tmux new-session -s envhaven`)
+- Survives reconnects (tmux detach/attach)
+- Destroyed on container stop (unless `/config` mounted and tmux resurrect configured)
+
 ## Design Principles
 
 | Principle | Application |

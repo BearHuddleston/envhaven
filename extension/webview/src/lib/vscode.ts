@@ -1,5 +1,11 @@
 import type { WebviewApi } from 'vscode-webview';
 
+export interface TmuxWindow {
+  index: number;
+  name: string;
+  active: boolean;
+}
+
 export interface WebviewToExtensionMessage {
   command:
     | 'runTool'
@@ -16,6 +22,9 @@ export interface WebviewToExtensionMessage {
     | 'setSshKey'
     | 'importGitHubKeys'
     | 'updatePreviewPort'
+    | 'switchTerminal'
+    | 'newTerminal'
+    | 'killTerminal'
     | 'ready';
   tool?: string;
   toolName?: string;
@@ -28,13 +37,15 @@ export interface WebviewToExtensionMessage {
   sshPublicKey?: string;
   username?: string;
   port?: number;
+  windowIndex?: number;
 }
 
 export interface ExtensionToWebviewMessage {
-  command: 'updateWorkspace' | 'portUpdateSuccess' | 'portUpdateError';
+  command: 'updateWorkspace' | 'portUpdateSuccess' | 'portUpdateError' | 'updateTerminals';
   workspace?: WorkspaceInfo;
   port?: number;
   error?: string;
+  tmuxWindows?: TmuxWindow[];
 }
 
 export interface SetupStep {
@@ -78,6 +89,7 @@ export interface WorkspaceInfo {
   workspaceId: string | null;
   workspaceToken: string | null;
   apiUrl: string | null;
+  tmuxWindows: TmuxWindow[];
 }
 
 class VSCodeAPI {

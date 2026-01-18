@@ -164,10 +164,18 @@ Scripts in `runtime/scripts/` run at container startup via s6-overlay:
 | `init-zsh-config-run` | Configure zsh |
 | `svc-sshd-run` | Run SSH daemon |
 
+User-facing scripts in `runtime/scripts/` (installed to `/opt/envhaven/bin/`):
+
+| Script | Purpose |
+|--------|---------|
+| `envhaven-status` | Full status display (`envhaven` command) |
+| `envhaven-welcome.sh` | Shell init (auto-attach to tmux) |
+
 ### Templates
 
 - `runtime/templates/AGENTS.md.template` - Template for generated AGENTS.md
 - `runtime/templates/settings.json` - VS Code settings
+- `runtime/templates/tmux.conf` - Terminal session configuration
 
 ## Pull Request Guidelines
 

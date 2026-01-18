@@ -32,6 +32,9 @@ EnvHaven solves this. It's a remote environment that spins up in seconds, with s
 🛡️ **Zero-Risk AI environment**
 Give autonomous agents full access in a containerized environment. If they break something, nuke the workspace and start over. Your local machine stays untouched.
 
+🖥️ **Pick Up Where You Left Off**
+Start Claude Code on your laptop, close the lid, resume from your desktop—same session, same state. Your AI agents and dev servers keep running while you're away. Come back from any device.
+
 🌲 **Evergreen AI Tooling**
 The landscape moves too fast to manage manually. EnvHaven ships with 12+ AI CLI tools (Claude Code, OpenCode, Aider, Codex, Gemini CLI, Goose, Mistral Vibe, etc.) built-in and ready to run.
 
@@ -72,8 +75,10 @@ docker run -d \
 ```
 
 1. Open `https://localhost:8443` (Password: `password`)
-2. Open terminal and run `opencode`, `claude`, or `aider`
-3. Start coding
+2. Open terminal—you're dropped into a persistent session
+3. Run `opencode`, `claude`, or `aider` and start coding
+
+**Multiple AI tools at once?** Click `+` in the footer or use the sidebar to create new terminals. Each runs in its own persistent session—close your browser and they keep running.
 
 ### Path B: Local Editor + Remote AI (Haven CLI)
 Use your local editor. Files sync bidirectionally. Agents run in the container.

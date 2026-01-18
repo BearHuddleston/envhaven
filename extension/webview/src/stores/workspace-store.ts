@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { WorkspaceInfo, AITool } from '../lib/vscode';
+import type { WorkspaceInfo, AITool, TmuxWindow } from '../lib/vscode';
 
 type PortUpdateStatus = 'idle' | 'updating' | 'success' | 'error';
 
@@ -13,6 +13,7 @@ interface WorkspaceStore {
   setLoading: (loading: boolean) => void;
   setPortUpdateStatus: (status: PortUpdateStatus, error?: string) => void;
   optimisticSetPort: (port: number) => void;
+  updateTerminals: (tmuxWindows: TmuxWindow[]) => void;
 
   getReadyTools: () => AITool[];
   getUnreadyTools: () => AITool[];
@@ -26,6 +27,12 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
 
   setWorkspace: (workspace) => set({ workspace, isLoading: false }),
   setLoading: (loading) => set({ isLoading: loading }),
+
+  updateTerminals: (tmuxWindows) => {
+    const { workspace } = get();
+    if (!workspace) return;
+    set({ workspace: { ...workspace, tmuxWindows } });
+  },
 
   setPortUpdateStatus: (status, error) => set({ 
     portUpdateStatus: status, 

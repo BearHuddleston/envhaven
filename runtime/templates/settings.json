@@ -18,7 +18,7 @@
   "workbench.activityBar.location": "top",
   "workbench.layoutControl.enabled": false,
   "window.menuBarVisibility": "compact",
-  "window.commandCenter": false,
+  "window.commandCenter": true,
   "breadcrumbs.enabled": false,
   "editor.minimap.enabled": false,
   "editor.overviewRulerBorder": false,

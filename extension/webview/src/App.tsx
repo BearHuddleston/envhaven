@@ -3,12 +3,13 @@ import { useEffect } from 'react';
 import { vscode, type ExtensionToWebviewMessage } from './lib/vscode';
 import { useWorkspaceStore } from './stores/workspace-store';
 import { ToolLauncher } from './components/tool-launcher';
+import { TerminalsPanel } from './components/terminals-panel';
 import { WorkspaceInfo, SshSection, TryEnvHavenCard } from './components/workspace-info';
 import { Skeleton } from './components/ui/skeleton';
 import { Separator } from './components/ui/separator';
 
 export default function App() {
-  const { isLoading, setWorkspace, workspace, setPortUpdateStatus } = useWorkspaceStore();
+  const { isLoading, setWorkspace, workspace, setPortUpdateStatus, updateTerminals } = useWorkspaceStore();
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<ExtensionToWebviewMessage>) => {
@@ -18,6 +19,11 @@ export default function App() {
         case 'updateWorkspace':
           if (message.workspace) {
             setWorkspace(message.workspace);
+          }
+          break;
+        case 'updateTerminals':
+          if (message.tmuxWindows) {
+            updateTerminals(message.tmuxWindows);
           }
           break;
         case 'portUpdateSuccess':
@@ -37,14 +43,10 @@ export default function App() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [setWorkspace, setPortUpdateStatus]);
+  }, [setWorkspace, setPortUpdateStatus, updateTerminals]);
 
   const handleOpenDocs = () => {
     vscode.postMessage({ command: 'openDocs' });
-  };
-
-  const handleOpenTerminal = () => {
-    vscode.postMessage({ command: 'openTerminal' });
   };
 
   if (isLoading) {
@@ -73,6 +75,7 @@ export default function App() {
   return (
     <div className="flex h-full flex-col p-3">
       <main className="flex-1 space-y-5">
+        <TerminalsPanel />
         <ToolLauncher />
         <WorkspaceInfo />
       </main>
@@ -90,12 +93,6 @@ export default function App() {
             onClick={handleOpenDocs}
           >
             Docs
-          </button>
-          <button
-            className="text-[11px] text-link hover:underline"
-            onClick={handleOpenTerminal}
-          >
-            New Terminal
           </button>
         </div>
       </footer>

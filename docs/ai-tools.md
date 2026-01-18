@@ -58,6 +58,28 @@ The EnvHaven extension in the VS Code sidebar provides a UI for setting API keys
 | `QWEN_API_KEY` | Qwen Code |
 | `FACTORY_API_KEY` | Factory Droid |
 
+## Persistent Terminals
+
+Start Claude Code on your laptop. Close the lid. Open your desktop browser. Pick up exactly where you left off—same session, same scroll position, same everything.
+
+EnvHaven terminals survive disconnects. Your AI agent keeps working while you're away. Your dev server keeps running. Come back hours later from any device and it's all still there.
+
+### Example
+
+1. Click "Claude Code" in sidebar → starts working on your refactor
+2. Click `+` in footer → new terminal, run `npm run dev`
+3. Click `+` again → `git log --oneline` to check history
+
+Close your browser. Go home. Open EnvHaven on your phone—all three terminals still running, exactly as you left them.
+
+### How to Manage Terminals
+
+| Method | How |
+|--------|-----|
+| **Sidebar** | "Terminals" panel shows all terminals—click to switch |
+| **Footer** | Click terminal name to switch, `+` to create new |
+| **Keyboard** | `Ctrl-b c` new, `Ctrl-b 1-9` switch, `Ctrl-b &` close |
+
 ## Quick Start Examples
 
 ### OpenCode

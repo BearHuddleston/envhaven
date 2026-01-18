@@ -98,6 +98,12 @@ export interface AITool {
   envVars?: string[];
 }
 
+export interface TmuxWindow {
+  index: number;
+  name: string;
+  active: boolean;
+}
+
 export interface WorkspaceInfo {
   isManaged: boolean;
   workspacePath: string;
@@ -116,11 +122,11 @@ export interface WorkspaceInfo {
   previewUrl: string | null;
   previewPortOpen: boolean;
   hasOhMyOpenCode: boolean;
-  // Platform integration (managed workspaces only)
   exposedPort: number;
   workspaceId: string | null;
   workspaceToken: string | null;
   apiUrl: string | null;
+  tmuxWindows: TmuxWindow[];
 }
 
 interface ToolDefinition {
@@ -456,6 +462,23 @@ function isPortOpen(port: number, host = '127.0.0.1'): Promise<boolean> {
   });
 }
 
+export async function getTmuxWindows(): Promise<TmuxWindow[]> {
+  try {
+    const { stdout } = await execSafe('tmux list-windows -t envhaven -F "#{window_index}|#{window_name}|#{window_active}"');
+    const lines = stdout.trim().split('\n').filter(Boolean);
+    return lines.map((line) => {
+      const [index, name, active] = line.split('|');
+      return {
+        index: parseInt(index, 10),
+        name: name || `Window ${index}`,
+        active: active === '1',
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 export async function getWorkspaceInfo(): Promise<WorkspaceInfo> {
   const isManaged = process.env.ENVHAVEN_MANAGED === 'true';
   const workspacePath = process.env.DEFAULT_WORKSPACE || '/config/workspace';
@@ -466,7 +489,7 @@ export async function getWorkspaceInfo(): Promise<WorkspaceInfo> {
   const workspaceToken = process.env.ENVHAVEN_WORKSPACE_TOKEN || null;
   const apiUrl = process.env.ENVHAVEN_API_URL || null;
 
-  const [toolResults, versions, sshEnabled, previewPortOpen] = await Promise.all([
+  const [toolResults, versions, sshEnabled, previewPortOpen, tmuxWindows] = await Promise.all([
     Promise.all(
       TOOL_DEFINITIONS.map(async (def) => {
         const installed = await commandExists(def.command);
@@ -491,6 +514,7 @@ export async function getWorkspaceInfo(): Promise<WorkspaceInfo> {
     getCachedVersions(),
     isSshEnabled(),
     isPortOpen(exposedPort),
+    getTmuxWindows(),
   ]);
 
   return {
@@ -515,5 +539,6 @@ export async function getWorkspaceInfo(): Promise<WorkspaceInfo> {
     workspaceId,
     workspaceToken,
     apiUrl,
+    tmuxWindows,
   };
 }

@@ -27,6 +27,7 @@ Inherited from [linuxserver/code-server](https://docs.linuxserver.io/images/dock
 | `ENVHAVEN_MANAGED` | false | Set to `true` for managed hosting mode (affects extension UI) |
 | `DEFAULT_SHELL` | bash | Set to `zsh` to use zsh as default shell |
 | `HAVEN_IDLE_TIMEOUT` | - | Auto-disconnect Haven CLI sessions after idle period (e.g., `30m`, `2h`, `0` to disable) |
+| `ENVHAVEN_SKIP_WELCOME` | - | Set to `1` to skip auto-attach to tmux on shell start |
 
 > **Planned features:** `ENVHAVEN_AI_TOOLS` (tool filtering) and `ENVHAVEN_AI_EXTENSION` (VS Code AI extension selection) are not yet implemented.
 

@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { getWorkspaceInfo } from './environment';
+import { spawn } from 'child_process';
+import { getWorkspaceInfo, getTmuxWindows } from './environment';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'envhaven.sidebarView';
@@ -20,14 +21,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     };
   }
 
-  // Reuse terminals by name to avoid tab clutter
-  private _getOrCreateTerminal(name: string, preserveFocus: boolean): vscode.Terminal {
+  private _getOrCreateTerminal(name: string, preserveFocus: boolean, skipWelcome = false): vscode.Terminal {
     const existing = vscode.window.terminals.find((t) => t.name === name);
     if (existing) return existing;
 
     return vscode.window.createTerminal({
       name,
       location: this._terminalLocation(preserveFocus),
+      env: skipWelcome ? { ENVHAVEN_SKIP_WELCOME: '1' } : undefined,
     });
   }
 
@@ -37,6 +38,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       this._view.webview.postMessage({
         command: 'updateWorkspace',
         workspace: workspaceInfo,
+      });
+    }
+  }
+
+  private async _refreshTerminalsOnly(): Promise<void> {
+    if (this._view) {
+      const tmuxWindows = await getTmuxWindows();
+      this._view.webview.postMessage({
+        command: 'updateTerminals',
+        tmuxWindows,
       });
     }
   }
@@ -70,7 +81,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async (message) => {
       switch (message.command) {
         case 'ready': {
-          await this.refresh();
+          this._refreshTerminalsOnly();
+          this.refresh();
           const hasOpenEditors = vscode.window.visibleTextEditors.length > 0;
           const hasOpenTerminals = vscode.window.terminals.length > 0;
           if (!hasOpenEditors && !hasOpenTerminals) {
@@ -143,6 +155,22 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           await this.refresh();
           break;
 
+        case 'switchTerminal':
+          if (typeof message.windowIndex === 'number') {
+            await this._switchTmuxWindow(message.windowIndex);
+          }
+          break;
+
+        case 'newTerminal':
+          await this._newTmuxWindow();
+          break;
+
+        case 'killTerminal':
+          if (typeof message.windowIndex === 'number') {
+            await this._killTmuxWindow(message.windowIndex);
+          }
+          break;
+
         case 'updatePreviewPort':
           if (message.port) {
             await this._updatePreviewPort(message.port);
@@ -162,7 +190,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   private _startPolling(): void {
     if (this._pollingInterval) return;
-    this._pollingInterval = setInterval(() => this.refresh(), 15000);
+    this._pollingInterval = setInterval(() => {
+      this._refreshTerminalsOnly();
+      this.refresh();
+    }, 5000);
   }
 
   private _stopPolling(): void {
@@ -172,25 +203,77 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private _runAiTool(toolName: string, command: string): void {
-    // Reuse per-tool terminal in editor area
-    const terminal = this._getOrCreateTerminal(toolName, false);
-    terminal.show(false); // Focus terminal since user explicitly ran tool
+  private async _runAiTool(toolName: string, command: string): Promise<void> {
+    const hasSession = await this._runTmuxCommand('tmux has-session -t envhaven');
+    
+    if (hasSession) {
+      await this._runTmuxCommand('tmux new-window -t envhaven -c /config/workspace');
+    } else {
+      await this._runTmuxCommand('tmux new-session -d -s envhaven -c /config/workspace');
+    }
+    
+    await this._runTmuxCommand(`tmux send-keys -t envhaven '${command.replace(/'/g, "'\\''")}' Enter`);
+    await this._refreshTerminalsOnly();
+    
+    this._ensureTerminalVisible();
+  }
 
-    // Wait for shell ready before sending command
-    void terminal.processId.then(() => {
-      terminal.sendText(command, true);
+  private async _runSetupCommand(toolName: string, command: string): Promise<void> {
+    const hasSession = await this._runTmuxCommand('tmux has-session -t envhaven');
+    
+    if (hasSession) {
+      await this._runTmuxCommand('tmux new-window -t envhaven -c /config/workspace');
+    } else {
+      await this._runTmuxCommand('tmux new-session -d -s envhaven -c /config/workspace');
+    }
+    
+    await this._runTmuxCommand(`tmux send-keys -t envhaven '${command.replace(/'/g, "'\\''")}' Enter`);
+    await this._refreshTerminalsOnly();
+    
+    this._ensureTerminalVisible();
+  }
+
+  private _ensureTerminalVisible(): void {
+    const existing = vscode.window.terminals.find((t) => t.name === 'Terminal');
+    if (existing) {
+      existing.show(false);
+    } else {
+      const terminal = vscode.window.createTerminal({
+        name: 'Terminal',
+        location: this._terminalLocation(false),
+      });
+      terminal.show(false);
+    }
+  }
+
+  private async _runTmuxCommand(command: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const child = spawn('sh', ['-c', command], { stdio: 'pipe' });
+      child.on('close', (code) => resolve(code === 0));
+      child.on('error', () => resolve(false));
     });
   }
 
-  private _runSetupCommand(toolName: string, command: string): void {
-    const name = `Setup: ${toolName}`;
-    const terminal = this._getOrCreateTerminal(name, false);
-    terminal.show(false);
+  private async _switchTmuxWindow(index: number): Promise<void> {
+    await this._runTmuxCommand(`tmux select-window -t envhaven:${index}`);
+    await this._refreshTerminalsOnly();
+  }
 
-    void terminal.processId.then(() => {
-      terminal.sendText(command, true);
-    });
+  private async _newTmuxWindow(): Promise<void> {
+    const hasSession = await this._runTmuxCommand('tmux has-session -t envhaven');
+    if (hasSession) {
+      await this._runTmuxCommand('tmux new-window -t envhaven -c /config/workspace');
+    } else {
+      await this._runTmuxCommand('tmux new-session -d -s envhaven -c /config/workspace');
+    }
+    await this._refreshTerminalsOnly();
+    
+    this._ensureTerminalVisible();
+  }
+
+  private async _killTmuxWindow(index: number): Promise<void> {
+    await this._runTmuxCommand(`tmux kill-window -t envhaven:${index}`);
+    await this._refreshTerminalsOnly();
   }
 
   private async _setApiKey(envVar: string, apiKey: string): Promise<void> {

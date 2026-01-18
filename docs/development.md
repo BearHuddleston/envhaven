@@ -289,6 +289,13 @@ Scripts in `runtime/scripts/` run at container startup via s6-overlay:
 | `init-zsh-config-run` | Configure zsh |
 | `svc-sshd-run` | Run SSH daemon |
 
+User-facing scripts (installed to `/opt/envhaven/bin/`):
+
+| Script | Command | Purpose |
+|--------|---------|---------|
+| `envhaven-status` | `envhaven` | Full status display |
+| `envhaven-welcome.sh` | - | Shell init (auto-attach) |
+
 ## GitHub Actions
 
 The CI/CD workflow (`.github/workflows/build.yml`) runs on:
