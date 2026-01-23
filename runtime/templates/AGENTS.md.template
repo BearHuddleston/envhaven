@@ -262,6 +262,59 @@ mkdir myapp && cd myapp
 go mod init myapp
 ```
 
+## Running Development Servers
+
+Use tmux windows to run dev servers. Name windows descriptively so they appear clearly in the tmux status bar and EnvHaven extension sidebar.
+
+### Naming Convention
+
+| Mode | Window Name | Example |
+|------|-------------|---------|
+| Development | `{project}-dev` | `myapp-dev` |
+| Production | `{project}` | `myapp` |
+
+Detect project name from directory: `basename $(pwd)`
+
+### Start a Dev Server
+
+```bash
+# From your project directory
+cd ${WORKSPACE_PATH}/myproject
+
+# Create named window (detached) and start server
+# -d flag keeps you in the current window - don't switch away from user
+tmux new-window -d -n "$(basename $(pwd))-dev" -c "$(pwd)" \; \
+  send-keys -t "$(basename $(pwd))-dev" 'npm run dev 2>&1 | tee /tmp/$(basename $(pwd))-dev.log' Enter
+```
+
+**Important**: The `-d` flag creates the window without switching to it. The agent stays in the current window with the user.
+
+### Check Logs
+
+Log files follow the pattern `/tmp/{project}-dev.log`. Read them without switching windows:
+
+```bash
+# Tail logs (live follow)
+tail -f /tmp/myapp-dev.log
+
+# Read last 100 lines
+tail -100 /tmp/myapp-dev.log
+
+# Search for errors
+grep -i error /tmp/myapp-dev.log
+```
+
+**For agents**: After starting a server for project `foo`, logs are at `/tmp/foo-dev.log`. Use `tail` or `grep` to inspect without leaving your current window.
+
+### Why This Pattern?
+
+| Benefit | Explanation |
+|---------|-------------|
+| **Named windows** | Appear in tmux status bar (`Ctrl+B` then window list) and extension sidebar |
+| **`-dev` suffix** | Distinguishes dev from production instances at a glance |
+| **Logs in `/tmp/`** | Accessible from any window; cleared on container restart |
+| **`tee` command** | Shows output live while capturing to file |
+
 ## Constraints
 
 1. **Storage**: Workspace data persists in `${WORKSPACE_PATH}`

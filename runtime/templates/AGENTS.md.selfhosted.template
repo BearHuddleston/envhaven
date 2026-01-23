@@ -29,6 +29,17 @@ ports:
   - "3000:3000"   # App dev server (optional)
 ```
 
+### Starting Dev Servers (Self-Hosted)
+
+When starting a dev server, remind the user to ensure the port is mapped in `docker-compose.yml`:
+
+```yaml
+ports:
+  - "3000:3000"   # Map your app's port
+```
+
+Then access at `http://<your-host>:3000`
+
 ### Cloudflare Tunnels (Optional)
 
 `cloudflared` is included. Set `CLOUDFLARE_TUNNEL_TOKEN` to enable automatic tunnel.

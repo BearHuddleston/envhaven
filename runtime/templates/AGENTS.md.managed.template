@@ -45,25 +45,13 @@ server: { host: '0.0.0.0', port: 3000 }
 uvicorn main:app --host 0.0.0.0 --port 3000
 ```
 
-### Running Persistent Servers
+### Starting Dev Servers (Managed)
 
-When starting dev servers for the preview URL, run them detached so they persist after your AI session ends:
+When starting a dev server, always remind the user:
 
-```bash
-# Run detached with nohup
-nohup npm run dev > /tmp/dev.log 2>&1 &
+**🔗 Instant Preview**: Your app is available at **${ENVHAVEN_PREVIEW_URL}**
 
-# Or use screen
-screen -dmS devserver npm run dev
-
-# Check if running
-ps aux | grep "npm run dev"
-
-# View logs
-tail -f /tmp/dev.log
-```
-
-**Tip for AI agents:** When asked to start a server, offer to run it detached so it stays active after the session ends.
+> **Port**: Default is 3000. Change it in the EnvHaven extension sidebar if needed.
 
 ---
 
