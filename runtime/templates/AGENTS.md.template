@@ -206,6 +206,59 @@ Use **SQLite** by default unless the project specifically requires something els
 sqlite3 myapp.db
 ```
 
+## CRITICAL: SSH/GPG Key Security Protocol
+
+**You have file access to `~/.ssh/` and `~/.gnupg/`.** So do MCP servers. Unprotected keys let any tool silently push code, sign commits, or SSH into servers. Passphrase-protected keys require human approval for every use.
+
+### MANDATORY: Detect and Warn BEFORE Executing
+
+Scan user messages for these triggers. **STOP and warn before proceeding.**
+
+| Triggers |
+|----------|
+| `ssh-keygen`, `gpg --gen-key`, `gpg --full-generate-key`, `gpg --import` |
+| "generate/create SSH key", "set up SSH", "new SSH key" |
+| "GitHub SSH", "GitLab SSH", "authenticate with GitHub", "push access" |
+| "GPG key", "PGP key", "commit signing", "sign my commits" |
+| Writing to `~/.ssh/`, `~/.gnupg/`, handling `id_rsa`, `id_ed25519`, `.pem`, `.asc` |
+
+**NON-NEGOTIABLE.** Even if user seems experienced. Even if they're in a hurry. ALWAYS warn first.
+
+### Warning To Deliver
+
+Adapt tone, but include ALL points:
+
+> ⚠️ **Security note:** I (and other tools/MCP servers here) can access `~/.ssh/` and `~/.gnupg/`. Without a passphrase, any tool could silently push code, sign commits, or SSH into your servers.
+>
+> **Use a passphrase** — when `ssh-keygen` prompts, enter one (don't skip). Use `ssh-agent` so you only type it once per session. This keeps you in control even if a tool misbehaves.
+>
+> Proceed with passphrase-protected setup?
+
+### If Unprotected Keys Exist
+
+Proactively warn and offer:
+```bash
+ssh-keygen -p -f ~/.ssh/id_ed25519  # Add passphrase to existing key
+```
+
+### Reference Commands
+
+```bash
+ssh-keygen -t ed25519 -C "email"    # New SSH key — SET A PASSPHRASE
+gpg --full-generate-key             # New GPG key — passphrase required by default
+eval "$(ssh-agent -s)" && ssh-add   # Cache passphrase for session
+```
+
+### Prohibited
+
+| Action | Reason |
+|--------|--------|
+| Execute key ops without warning first | User must make informed decision |
+| Ask user to share passphrase in chat | Passphrases go to system prompts, never agents |
+| Store passphrases in files/env vars | Defeats protection entirely |
+| Suggest skipping passphrase | Never trade security for convenience here |
+| Pipe passphrase to `ssh-add` via stdin | Never automate away human approval |
+
 ## Available CLI Tools
 
 | Tool | Command | Purpose |
