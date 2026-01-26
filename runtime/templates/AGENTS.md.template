@@ -376,6 +376,34 @@ eval "$(ssh-agent -s)" && ssh-add   # Cache passphrase for session
 
 ---
 
+## Interactive Setup Protocol
+
+Some tools require interactive sessions—OAuth flows, browser logins, configuration wizards (e.g., `gh auth login`, `goose configure`, post-install setup commands). When detected, offer a choice:
+
+> **Option A: I'll handle it** — Run commands and configure automatically.
+>
+> **Option B: Open a terminal** — Open a new terminal with the command ready for you.
+
+### Option B Implementation
+
+Open a new terminal window. For one-shot installs, auto-close on success:
+
+```bash
+tmux new-window -n "setup-{tool}" -c "${WORKSPACE_PATH}" \; \
+  send-keys "{command} && sleep 1 && exit" Enter
+```
+
+For persistent sessions (OAuth, wizards), omit the `&& exit` so the window stays open.
+
+### Skip the Choice
+
+Proceed automatically when:
+- Non-interactive commands (`bun install`, `git clone`)
+- Commands already run successfully this session
+- User explicitly said "do it for me"
+
+---
+
 ## Constraints
 
 1. **Storage**: Workspace data persists in `${WORKSPACE_PATH}`
