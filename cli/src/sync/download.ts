@@ -47,7 +47,7 @@ export async function downloadMutagen(onProgress?: (message: string) => void): P
   const url = getMutagenDownloadUrl(platform, arch);
   const binDir = getMutagenBinDir();
 
-  onProgress?.(`Downloading Mutagen v${MUTAGEN_VERSION} for ${platform}/${arch}...`);
+  onProgress?.("Setting up file sync (one-time)...");
 
   if (!existsSync(binDir)) {
     mkdirSync(binDir, { recursive: true });
@@ -66,7 +66,7 @@ export async function downloadMutagen(onProgress?: (message: string) => void): P
     fileStream
   );
 
-  onProgress?.("Extracting Mutagen...");
+  onProgress?.("Installing...");
 
   const proc = Bun.spawn(["tar", "-xzf", tempFile, "-C", binDir], {
     stdout: "pipe",
@@ -86,7 +86,7 @@ export async function downloadMutagen(onProgress?: (message: string) => void): P
     chmodSync(mutagenPath, 0o755);
   }
 
-  onProgress?.("Mutagen installed successfully");
+  onProgress?.("File sync ready");
 }
 
 export async function ensureMutagenInstalled(onProgress?: (message: string) => void): Promise<string> {
