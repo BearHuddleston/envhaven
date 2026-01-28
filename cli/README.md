@@ -91,11 +91,14 @@ haven connect .
 # Reconnect (from within a connected directory)
 haven connect
 
-# After workspace rebuild (clear cached host key)
+# Proactively clear cached host key (usually not needed - Haven auto-detects)
 haven connect --reset-host-key
 
 # Override idle timeout
 haven connect --idle-timeout 4h
+
+# Automatically use .gitignore patterns for sync exclusion
+haven connect . --use-gitignore
 ```
 
 **Target formats:**
@@ -207,15 +210,37 @@ haven -- status
 - **Conflict detection** - If both sides modify the same file, a `.sync-conflict` file is created
 - **Ignored paths** - Common build artifacts are automatically ignored (node_modules, .git, dist, etc.)
 
-### Custom Ignore Patterns
+### Gitignore Integration
 
-Create `.havenignore` in your project root (gitignore syntax):
+When connecting a directory with a `.gitignore` file, Haven prompts:
 
-```gitignore
-data/
-*.csv
-.terraform/
 ```
+Found .gitignore. Exclude matching files from sync? [Y/n]
+```
+
+This adds your gitignore patterns to the sync exclusion list, preventing large ignored directories (like `data/`, custom caches, etc.) from syncing.
+
+**To skip the prompt:**
+```bash
+haven connect . --use-gitignore    # Always use .gitignore patterns
+haven connect .                     # Prompts if .gitignore exists
+```
+
+### Path Safety
+
+Haven warns before syncing unusually broad directories:
+
+```
+⚠ "~" is unusually broad for a project directory.
+Are you sure you want to sync this path? [y/N]
+```
+
+**Flagged paths include:**
+- System directories: `/`, `~`, `/etc`, `/var`, `/usr`, `/tmp`
+- Common home folders: `~/Documents`, `~/Downloads`, `~/Desktop`
+- Build/dependency directories: `node_modules`, `.git`, `dist`, `build`, `venv`
+
+This prevents accidentally syncing your entire home directory or massive dependency folders.
 
 ## Configuration
 
@@ -305,7 +330,7 @@ If keys are usable but connection still fails:
 
 | Error | Likely Cause | Fix |
 |-------|--------------|-----|
-| "Host key verification failed" | Workspace rebuilt | `haven connect --reset-host-key` |
+| "Host key verification failed" | Workspace rebuilt | Haven prompts automatically; or `--reset-host-key` |
 | "Permission denied" | Key not authorized | Add public key to workspace |
 | Timeout | Workspace stopped or firewall | Check workspace status |
 
@@ -349,7 +374,16 @@ This means SSH couldn't authenticate. Causes:
 
 #### "Host key verification failed"
 
-The workspace was rebuilt and has a new host key:
+This happens when the workspace container was rebuilt and has a new SSH host key.
+
+**Haven handles this automatically:**
+```
+Connection fingerprint changed. If you recently updated your workspace, this is expected. Reconnect? [Y/n]
+```
+
+Press Enter (or `Y`) and Haven removes the old key and reconnects.
+
+**Proactive reset** (for scripting or to skip the prompt):
 ```bash
 haven connect --reset-host-key
 ```

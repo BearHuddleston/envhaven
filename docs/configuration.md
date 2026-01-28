@@ -112,6 +112,7 @@ docker logs envhaven 2>&1 | grep -i ssh
 - Firewall blocking the SSH port
 - Key mismatch between local and `authorized_keys`
 - User shell set to `/bin/false` (SSH authenticates but commands exit immediately - fixed automatically by EnvHaven's init scripts)
+- Host key changed after workspace rebuild (Haven CLI auto-detects and prompts to reconnect)
 
 ### Connection String Configuration
 
