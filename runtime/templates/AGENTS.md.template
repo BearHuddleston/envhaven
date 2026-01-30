@@ -187,6 +187,8 @@ Add to `~/.zshrc` or `~/.bashrc` for persistence across sessions.
 | **curl** | `curl` | HTTP requests |
 | **htop** | `htop` | Process viewer |
 | **cloudflared** | `cloudflared` | Cloudflare tunnel CLI |
+| **ffmpeg** | `ffmpeg` | Video/audio processing |
+| **Playwright** | `playwright` | Browser automation (Chromium) |
 
 ---
 

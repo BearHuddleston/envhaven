@@ -145,6 +145,7 @@ You can also provide your own keys via env vars (`-e ANTHROPIC_API_KEY=...`) or 
 ### Dev Tools
 - **Core:** `zsh`, `git`, `curl`, `wget`, `zip`, `unzip`
 - **Utils:** `ripgrep`, `fd`, `jq`, `sqlite3`, `htop`
+- **Media:** `ffmpeg` (video/audio), `playwright` (browser automation)
 - **Integrations:** `gh` (GitHub CLI), `docker` (client)
 
 ## Haven CLI Architecture
