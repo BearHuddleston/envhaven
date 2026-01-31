@@ -67,6 +67,7 @@ The tmux status bar shows:
 | `x` | Close current pane |
 | `0-9` | Switch to window by number |
 | `Shift+Click` | Close window (in status bar) |
+| `Ctrl+D` | Close pane (no prefix needed — sends EOF to shell) |
 
 ### Default Behavior
 
@@ -378,31 +379,72 @@ eval "$(ssh-agent -s)" && ssh-add   # Cache passphrase for session
 
 ---
 
-## Interactive Setup Protocol
+## Installation Protocol
 
-Some tools require interactive sessions—OAuth flows, browser logins, configuration wizards (e.g., `gh auth login`, `goose configure`, post-install setup commands). When detected, offer a choice:
+When the user asks to install or set up a tool, offer two options:
 
-> **Option A: I'll handle it** — Run commands and configure automatically.
+> **Option A: I'll handle it** — I'll research, install, configure, and verify everything. You only step in if a step physically requires you (like a browser login).
 >
-> **Option B: Open a terminal** — Open a new terminal with the command ready for you.
+> **Option B: Open a terminal** — I'll open a pane with the installer ready to go, and you drive.
 
-### Option B Implementation
+Skip the choice and proceed directly when:
+- The user explicitly said "do it for me" or "install it" → Option A
+- The user explicitly said "open a terminal" or "I'll do it" → Option B
+- It's a trivial non-interactive command (`bun add`, `apt install -y`) → Option A
 
-Open a new terminal window. For one-shot installs, auto-close on success:
+### Option A: Agent-Driven Install
+
+1. **Research the CLI.** Run `<tool> --help`, check subcommands, read docs. Find non-interactive flags (`--yes`, `--no-input`, `--batch`), environment variables, and config file locations. Almost every wizard can be bypassed.
+2. **Decompose wizards into discrete commands.** Interactive onboarding is usually just: install → configure credentials → configure integrations → start service. Find the individual command for each step and run them yourself.
+3. **Write config files directly** when CLI flags aren't enough. Check where the tool stores config (`~/.config/<tool>/`, `~/<tool>.json`, etc.) and write valid JSON/YAML/TOML yourself.
+4. **Set environment variables** instead of running credential prompts. Most tools accept API keys, tokens, and secrets via env vars.
+5. **Start daemons in tmux.** This container has no systemd. Use the tmux pattern from [Running Dev Servers](#running-dev-servers) — named window, detached, logs to `/tmp/`.
+6. **Verify it works.** Run the tool's health/status/doctor command. If something is wrong (blocked senders, token mismatch, missing dependency), **fix it** — don't report it and stop.
+
+### When the User Must Act (tmux handoff)
+
+Some steps physically require a human: OAuth browser redirects, QR code scans, device approval prompts. For these — and **only** these — hand off to the user via a tmux split pane.
+
+**The workflow:**
+
+1. **Do everything else first.** Install the tool, write config files, set env vars. The user should only need to do the one human-required step.
+
+2. **Split the current window horizontally.** This opens a pane below the user's current context — they don't lose sight of what they were doing:
 
 ```bash
-tmux new-window -n "setup-{tool}" -c "${WORKSPACE_PATH}" \; \
-  send-keys "{command} && sleep 1 && exit" Enter
+# Opens a shell pane below, then sends the auth command into it
+tmux split-window -v -l 30% -c "${WORKSPACE_PATH}" \; \
+  send-keys "{auth-command}" Enter
 ```
 
-For persistent sessions (OAuth, wizards), omit the `&& exit` so the window stays open.
+The pane stays open after the command finishes so the user can see output, troubleshoot, or run follow-up commands. They close it with `Ctrl+D` when done.
 
-### Skip the Choice
+3. **Tell the user exactly what to do:**
 
-Proceed automatically when:
-- Non-interactive commands (`bun install`, `git clone`)
-- Commands already run successfully this session
-- User explicitly said "do it for me"
+> I've installed and configured {tool}. The last step requires browser authentication.
+> A pane opened below — complete the login there. Press `Ctrl+D` to close it when done.
+
+4. **After the user completes it**, verify the auth worked (`{tool} status`, `{tool} whoami`, etc.) and finish any remaining configuration.
+
+### Option A: Never Do This
+
+| Forbidden | Why |
+|-----------|-----|
+| "Run the setup wizard in another terminal" as your first move | You are the installer. Research non-interactive options first. |
+| Leave post-install config for the user to discover | Allowlists, pairing approvals, firewall rules — handle them. |
+| Assume interactive-only without checking `--help` and docs | Almost every tool has a non-interactive path. Find it. |
+| Open a tmux pane for steps you could automate | tmux handoff is a last resort for human-only steps. |
+
+### Option B: User-Driven Install
+
+Open a split pane with the install command ready:
+
+```bash
+tmux split-window -v -l 30% -c "${WORKSPACE_PATH}" \; \
+  send-keys "{install-command}" Enter
+```
+
+The user runs the installer themselves. When done, they close the pane with `Ctrl+D`.
 
 ---
 
